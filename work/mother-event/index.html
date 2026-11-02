@@ -1,0 +1,714 @@
+<!-- ============================================================
+     漫画LP骨格テンプレート（lp-template.html）
+     企画設計書 §4.1（配布キット仕様）・§6.1（セリフHTML重ね）・§6.2（組版）に準拠。
+
+     使い方（参加者向け）:
+       1. 下の「セリフ定義ブロック」（PANEL_DATA）だけを書き換えれば、
+          全コマのセリフ・位置・向きが変わります。画像やHTML構造は触りません。
+       2. コマ画像は images/panel01.png 〜 panel10.png を差し替えるだけです。
+          見本画像のまま・自分の画像・混在、どれでも構いません。
+       3. このファイル自体は直接編集せず、AIエージェントに日本語で
+          「コマ5のセリフを◯◯に変えて」のように依頼してください。
+
+     依存: なし（外部CDN・外部フォント参照ゼロ。file:// で単独完結）。
+     フォルダ構成: このHTML1枚 + images/ フォルダ の2点だけで完結します。
+     ============================================================ -->
+<!doctype html>
+<html lang="ja">
+<title>親子のものづくり体験｜お母さんと子供の時間</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+  :root {
+    --lp-width: 420px;           /* 参考LPの実測値: コンテンツ幅約420pxのスマホ専用レイアウト */
+    --lp-bg: #fff8ee;
+    --lp-page-bg: #ede9df;
+    --lp-ink: #174c51;
+    --lp-accent: #d46b40;
+    --lp-accent-ink: #ffffff;
+    --lp-bubble-bg: #ffffff;
+    --lp-bubble-border: #1c1a17;
+    --lp-scarcity-bg: #fff4e5;
+    --lp-scarcity-border: #d1373a;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--lp-page-bg);
+    color: var(--lp-ink);
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden; /* ページ全体としては横スクロールを出さない設計。中身側で幅を制御する */
+  }
+
+  /* デスクトップでは中央寄せ + 両脇余白。モバイルではそのまま画面幅いっぱい */
+  .lp-page {
+    max-width: var(--lp-width);
+    margin: 0 auto;
+    background: var(--lp-bg);
+    min-height: 100vh;
+    position: relative;
+    box-shadow: 0 0 24px rgba(0,0,0,0.08);
+  }
+
+  /* ============ 型カード① FVバナー ============ */
+  .lp-fv {
+    position: relative;
+    width: 100%;
+    overflow: hidden;      /* フキダシのしっぽ(::after)がバナー枠の外へはみ出さないようにする */
+  }
+  .lp-fv img { display: block; width: 100%; height: auto; }
+  .lp-fv-caption {
+    padding: 14px 16px 18px;
+    background: var(--lp-ink);
+    color: #fff;
+  }
+  .lp-fv-caption .lp-fv-headline {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-wrap: balance;
+    word-break: keep-all;      /* 「経営者」等の複合語が語中で改行されるのを防ぐ（375px所見対応） */
+    overflow-wrap: break-word; /* keep-allでも収まらない場合の保険 */
+    margin: 0 0 8px;
+  }
+  .lp-fv-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .lp-fv-chips li {
+    font-size: 12px;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 999px;
+    padding: 4px 10px;
+    min-width: 0;
+  }
+
+  /* ============ コマ群（型カード②〜⑧共通の枠） ============ */
+  .lp-panel {
+    position: relative;   /* セリフ吹き出しをこの中で絶対配置する基準 */
+    width: 100%;
+    line-height: 0;       /* 画像下の余白ゼロ */
+    overflow: hidden;      /* フキダシのしっぽ(::after)がコマ枠の外(隣のコマ)へはみ出さないようにする */
+  }
+  .lp-panel img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* コマとコマの間の余白なし（漫画LPは通しで縦に連結する） */
+  .lp-panels { display: block; }
+
+  /* ============ 中扉・黒帯の差し込み（型カード③用） ============ */
+  .lp-nakabiraki {
+    width: 100%;
+    padding: 34px 16px;
+    text-align: center;
+    background: var(--lp-page-bg);
+    border-top: 1px solid rgba(0,0,0,0.08);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+  .lp-nakabiraki .lp-nakabiraki-text {
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    color: var(--lp-ink);
+    margin: 0;
+  }
+  .lp-kurotai {
+    width: 100%;
+    padding: 20px 16px;
+    text-align: center;
+    background: #111;
+  }
+  .lp-kurotai .lp-kurotai-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.1em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  /* ============ セリフ吹き出し（HTMLオーバーレイ） ============ */
+  /* コマ画像の上に絶対配置する。位置は各コマ側の data-panel 要素に対する
+     パーセンテージ座標で PANEL_DATA から自動配置される（下部スクリプト参照）。 */
+  .lp-bubble {
+    position: absolute;
+    max-width: 62%;
+    min-height: 50px;             /* 短文でも視認性を確保する最小高さ */
+    min-width: 60px;              /* 縦書き時の最小幅にも同様に適用 */
+    background: var(--lp-bubble-bg);
+    border: 2px solid var(--lp-bubble-border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.15);
+    word-break: keep-all;         /* 名詞と助詞の中途半端な分断を避ける（吹き出し内の短文用） */
+    line-break: strict;           /* 禁則処理を有効化。句読点・小書き文字が行頭に来るのを防ぐ */
+    overflow-wrap: normal;        /* anywhereにすると禁則を無視して句点だけが1行に残るため使わない */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  /* しっぽ（フキダシの三角）: デフォルトは左下向き。data-tail 属性で向きを切替 */
+  .lp-bubble::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 10px solid transparent;
+  }
+  .lp-bubble[data-tail="bottom-left"]::after {
+    left: 22px; bottom: -18px;
+    border-top-color: var(--lp-bubble-border);
+    border-bottom: none;
+  }
+  .lp-bubble[data-tail="bottom-right"]::after {
+    right: 22px; bottom: -18px;
+    border-top-color: var(--lp-bubble-border);
+    border-bottom: none;
+  }
+  .lp-bubble[data-tail="top-left"]::after {
+    left: 22px; top: -18px;
+    border-bottom-color: var(--lp-bubble-border);
+    border-top: none;
+  }
+  .lp-bubble[data-tail="top-right"]::after {
+    right: 22px; top: -18px;
+    border-bottom-color: var(--lp-bubble-border);
+    border-top: none;
+  }
+  .lp-bubble[data-tail="none"]::after { display: none; }
+
+  /* 横書き（既定） */
+  .lp-bubble[data-writing="horizontal"] {
+    writing-mode: horizontal-tb;
+  }
+  /* 縦書き対応: writing-mode: vertical-rl */
+  .lp-bubble[data-writing="vertical"] {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    max-width: none;
+    max-height: 82%;   /* 縦書きは複数列に折り返すため70%だと長文で下端を突き抜けていた（F-3対応） */
+    display: block;    /* flexだと縦書きの列折り返しが正しく効かないため（F-3対応） */
+    padding: 14px 10px;
+  }
+
+  /* ============ 締めバナー（回収シーンの静止バナー） ============ */
+  .lp-closing-banner {
+    width: 100%;
+    padding: 28px 16px;
+    text-align: center;
+    background: var(--lp-ink);
+    color: #fff;
+  }
+  .lp-closing-banner p {
+    margin: 0 0 6px;
+    font-size: 16px;
+    line-height: 1.6;
+    text-wrap: balance;
+  }
+  .lp-closing-banner .lp-closing-sub {
+    font-size: 13px;
+    opacity: 0.85;
+  }
+
+  /* ============ CTAボタン（本文中） ============ */
+  .lp-cta-block {
+    padding: 20px 16px 28px;
+    text-align: center;
+    background: var(--lp-bg);
+  }
+  .lp-cta-button {
+    display: inline-block;
+    width: 100%;
+    max-width: 340px;
+    padding: 16px 20px;
+    background: var(--lp-accent);
+    color: var(--lp-accent-ink);
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 10px;
+    text-decoration: none;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+  }
+  .lp-cta-button:focus-visible {
+    outline: 3px solid #1c1a17;
+    outline-offset: 3px;
+  }
+
+  /* ============ 「やることは3つだけ」 ============ */
+  .lp-steps {
+    padding: 24px 16px;
+    background: #fff;
+  }
+  .lp-steps h2 {
+    font-size: 17px;
+    text-align: center;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  .lp-steps ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: lp-step;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .lp-steps li {
+    counter-increment: lp-step;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0; /* flex item の膨張防止（DESIGN.md §3） */
+  }
+  .lp-steps li::before {
+    content: counter(lp-step);
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--lp-accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lp-steps li span {
+    min-width: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    padding-top: 4px;
+  }
+
+  /* ============ 希少性ボックス ============ */
+  .lp-scarcity {
+    margin: 0 16px 28px;
+    padding: 14px 14px;
+    background: var(--lp-scarcity-bg);
+    border: 1.5px solid var(--lp-scarcity-border);
+    border-radius: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .lp-scarcity svg { flex: 0 0 auto; width: 20px; height: 20px; margin-top: 2px; }
+  .lp-scarcity p {
+    margin: 0;
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #6b3a00;
+  }
+
+  /* ============ スティッキーCTA（画面下に追従・2段） ============ */
+  .lp-sticky-cta {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+    width: 100%;
+    max-width: var(--lp-width);
+    background: var(--lp-ink);
+    color: #fff;
+    padding: 8px 16px 12px;
+    text-align: center;
+    z-index: 10;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
+  }
+  .lp-sticky-cta .lp-sticky-copy {
+    margin: 0 0 6px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+  .lp-sticky-cta .lp-cta-button {
+    max-width: none;
+    padding: 12px 16px;
+    font-size: 15px;
+  }
+
+  /* スティッキーCTAが本文最終要素と重ならないよう、本文側に下余白を確保 */
+  .lp-page { padding-bottom: 96px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+  [hidden] { display: none !important; }
+  .lp-fv-headline { white-space: pre-line; }
+  .lp-bubble { max-width: 47%; padding: 9px 10px; font-size: 13px; word-break: normal; overflow-wrap: anywhere; }
+  .lp-page { padding-bottom: 120px; }
+  .lp-cta-button[aria-disabled="true"] { background: #d7dbd7; color: #46524f; box-shadow: none; cursor: not-allowed; pointer-events: none; }
+  .lp-fv-chips li { max-width: 100%; overflow-wrap: anywhere; }
+</style>
+
+<div class="lp-page">
+
+  <!-- ここは型カード①（FVバナー）: 誰向けの何の話かを3秒で宣言し、ベネフィット3つを添える -->
+  <section class="lp-fv" data-panel="fv">
+    <img src="images/panel01.png" alt="FVバナー コマ1" width="1448" height="1086">
+    <div class="lp-fv-caption">
+      <p class="lp-fv-headline" id="lp-fv-headline">お母さんと子供が一緒に共同体験できるイベントです。
+ものづくり体験。
+3歳ぐらい。</p>
+      <ul class="lp-fv-chips" id="lp-fv-chips"><li>子供と一緒に同じ体験ができる。</li><li>子供の創造性をかきたてる。</li><li>材料はイベント開催側がすべて用意する。</li></ul>
+    </div>
+  </section>
+
+  <div class="lp-panels">
+
+    <!-- ここは型カード②（幸せな未来の先出し） -->
+    <section class="lp-panel" data-panel="panel02">
+      <img src="images/panel02.png" alt="コマ2" width="1448" height="1086">
+    
+      <div class="lp-bubble" style="top:73%;left:4%;" data-writing="horizontal" data-tail="none">ものづくりをしながら笑っています。</div>
+    </section>
+
+    <!-- ここは型カード③-A（回想への落とし・中扉） -->
+    <div class="lp-nakabiraki">
+      <p class="lp-nakabiraki-text" id="lp-nakabiraki-text-1"></p>
+    </div>
+    <section class="lp-panel" data-panel="panel03">
+      <img src="images/panel03.png" alt="コマ3（中扉直後）" width="1448" height="1086">
+    </section>
+
+    <!-- ここは型カード③-B（回想への落とし・黒帯） -->
+    <div class="lp-kurotai">
+      <p class="lp-kurotai-text" id="lp-kurotai-text-1">2ヶ月前。</p>
+    </div>
+    <section class="lp-panel" data-panel="panel04">
+      <img src="images/panel04.png" alt="コマ4（黒帯直後）" width="1448" height="1086">
+    </section>
+
+    <!-- ここは型カード④（苦境の具体場面） -->
+    <section class="lp-panel" data-panel="panel05">
+      <img src="images/panel05.png" alt="コマ5" width="1448" height="1086">
+    
+      <div class="lp-bubble" style="top:5%;left:4%;" data-writing="horizontal" data-tail="none">15時</div>
+      <div class="lp-bubble" style="top:65%;left:4%;" data-writing="horizontal" data-tail="none">大量のメールやメッセージ。</div>
+    </section>
+
+    <!-- ここは型カード⑤（諦念のアップ） -->
+    <section class="lp-panel" data-panel="panel06">
+      <img src="images/panel06.png" alt="コマ6" width="1448" height="1086">
+    
+      <div class="lp-bubble" style="top:8%;left:4%;" data-writing="horizontal" data-tail="bottom-right">全然減らない。</div>
+    </section>
+
+    <!-- ここは型カード⑥（侵食される日常） -->
+    <section class="lp-panel" data-panel="panel07">
+      <img src="images/panel07.png" alt="コマ7" width="1448" height="1086">
+    
+      <div class="lp-bubble" style="top:5%;left:4%;" data-writing="horizontal" data-tail="none">仕事が忙しくて時間が取れない。</div>
+      <div class="lp-bubble" style="top:70%;left:4%;" data-writing="horizontal" data-tail="none">子供と一緒に遊びたい時間。</div>
+    </section>
+
+    <!-- ここは型カード⑦（一番深い底・本日の核） -->
+    <section class="lp-panel" data-panel="panel08">
+      <img src="images/panel08.png" alt="コマ8（一番深い底）" width="1448" height="1086">
+    
+      <div class="lp-bubble" style="top:62%;left:49%;" data-writing="horizontal" data-tail="top-left">仕事を止めたら他の人に迷惑がかかるから</div>
+    </section>
+
+    <!-- ここは型カード⑧（案内役の登場） -->
+    <section class="lp-panel" data-panel="panel09">
+      <img src="images/panel09.png" alt="コマ9" width="1448" height="1086">
+    
+      <div class="lp-bubble" style="top:67%;left:4%;" data-writing="horizontal" data-tail="none">お母さんと子供が一緒に共同体験できるイベントです。</div>
+      <div class="lp-bubble" style="top:5%;left:4%;" data-writing="horizontal" data-tail="none">メール処理はAIに任せればいい。</div>
+    </section>
+
+    <!-- ここは型カード⑨（回収とCTA） -->
+    <section class="lp-panel" data-panel="panel10">
+      <img src="images/panel10.png" alt="コマ10（回収）" width="1448" height="1086">
+    
+      <div class="lp-bubble" style="top:74%;left:4%;" data-writing="horizontal" data-tail="none">子供と一緒に同じ体験ができる。</div>
+    </section>
+
+  </div>
+
+  <!-- ここは型カード⑨の続き（締めバナー: 冒頭②の幸せシーンへの回収を静止バナーで再宣言） -->
+  <section class="lp-closing-banner">
+    <p id="lp-closing-headline">子供と一緒に同じ体験ができる。</p>
+    <p class="lp-closing-sub" id="lp-closing-sub">安全に参加してもらいます。</p>
+  </section>
+
+  <!-- ここは型カード⑨の続き（CTAボタン・本文中） -->
+  <div class="lp-cta-block">
+    <a class="lp-cta-button" role="button" aria-disabled="true" disabled tabindex="-1" aria-describedby="lp-sticky-copy" id="lp-cta-main">メールをAIに任すセミナーに申し込む</a>
+  </div>
+
+  <!-- ここは型カード⑨の続き（やることは3つだけ） -->
+  <section class="lp-steps">
+    <h2 id="lp-steps-heading">申し込みについて</h2>
+    <ol id="lp-steps-list"><li><span>メールをAIに任すセミナー</span></li><li><span>メールで申し込み</span></li></ol>
+  </section>
+
+  <!-- ここは型カード⑨の続き（希少性ボックス） -->
+  <section class="lp-scarcity" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M12 9v4m0 4h.01M10.29 3.86l-8.18 14.18A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-3l-8.18-14.14a2 2 0 0 0-3.42 0z"/>
+    </svg>
+    <p id="lp-scarcity-text"></p>
+  </section>
+
+</div>
+
+<!-- ここは型カード⑨の続き（スティッキーCTA・画面下追従の2段） -->
+<div class="lp-sticky-cta">
+  <p class="lp-sticky-copy" id="lp-sticky-copy">メールで申し込み｜宛先は準備中です</p>
+  <a class="lp-cta-button" role="button" aria-disabled="true" disabled tabindex="-1" aria-describedby="lp-sticky-copy" id="lp-sticky-cta-button">メールをAIに任すセミナーに申し込む</a>
+</div>
+
+<script>
+/* ============================================================
+   === セリフ定義ブロック（PANEL_DATA） ===
+   このオブジェクトだけを書き換えれば、全コマのセリフ・位置・向きが変わります。
+   HTML構造やCSSを触る必要はありません。
+
+   ── コマ共通見出し・バナー類 ──
+   fvHeadline / fvChips / closingHeadline / closingSub / ctaLabel /
+   stepsHeading / steps / scarcityText / stickyCopy / stickyCtaLabel /
+   nakabirakiText1 / kurotaiText1
+
+   ── 各コマのセリフ配列（panelId ごとに複数可） ──
+   panels: {
+     "panel02": [
+       {
+         text: "セリフ本文",
+         top: "10%",     // コマ画像の上からの位置（%）
+         left: "8%",     // コマ画像の左からの位置（%）。writing: vertical のときは right 指定も可
+         writing: "horizontal", // "horizontal" | "vertical"
+         tail: "bottom-left",   // "bottom-left" | "bottom-right" | "top-left" | "top-right" | "none"
+       },
+     ],
+   }
+   ============================================================ */
+const PANEL_DATA = {
+  "fvHeadline": "お母さんと子供が一緒に共同体験できるイベントです。\nものづくり体験。\n3歳ぐらい。",
+  "fvChips": [
+    "子供と一緒に同じ体験ができる。",
+    "子供の創造性をかきたてる。",
+    "材料はイベント開催側がすべて用意する。"
+  ],
+  "nakabirakiText1": "",
+  "kurotaiText1": "2ヶ月前。",
+  "closingHeadline": "子供と一緒に同じ体験ができる。",
+  "closingSub": "安全に参加してもらいます。",
+  "ctaLabel": "メールをAIに任すセミナーに申し込む",
+  "stepsHeading": "申し込みについて",
+  "steps": [
+    "メールをAIに任すセミナー",
+    "メールで申し込み"
+  ],
+  "scarcityText": "",
+  "stickyCopy": "メールで申し込み｜宛先は準備中です",
+  "stickyCtaLabel": "メールをAIに任すセミナーに申し込む",
+  "panels": {
+    "panel02": [
+      {
+        "text": "ものづくりをしながら笑っています。",
+        "top": "73%",
+        "left": "4%",
+        "writing": "horizontal",
+        "tail": "none"
+      }
+    ],
+    "panel03": [],
+    "panel04": [],
+    "panel05": [
+      {
+        "text": "15時",
+        "top": "5%",
+        "left": "4%",
+        "writing": "horizontal",
+        "tail": "none"
+      },
+      {
+        "text": "大量のメールやメッセージ。",
+        "top": "65%",
+        "left": "4%",
+        "writing": "horizontal",
+        "tail": "none"
+      }
+    ],
+    "panel06": [
+      {
+        "text": "全然減らない。",
+        "top": "8%",
+        "left": "4%",
+        "writing": "horizontal",
+        "tail": "bottom-right"
+      }
+    ],
+    "panel07": [
+      {
+        "text": "仕事が忙しくて時間が取れない。",
+        "top": "5%",
+        "left": "4%",
+        "writing": "horizontal",
+        "tail": "none"
+      },
+      {
+        "text": "子供と一緒に遊びたい時間。",
+        "top": "70%",
+        "left": "4%",
+        "writing": "horizontal",
+        "tail": "none"
+      }
+    ],
+    "panel08": [
+      {
+        "text": "仕事を止めたら他の人に迷惑がかかるから",
+        "top": "62%",
+        "left": "49%",
+        "writing": "horizontal",
+        "tail": "top-left"
+      }
+    ],
+    "panel09": [
+      {
+        "text": "お母さんと子供が一緒に共同体験できるイベントです。",
+        "top": "67%",
+        "left": "4%",
+        "writing": "horizontal",
+        "tail": "none"
+      },
+      {
+        "text": "メール処理はAIに任せればいい。",
+        "top": "5%",
+        "left": "4%",
+        "writing": "horizontal",
+        "tail": "none"
+      }
+    ],
+    "panel10": [
+      {
+        "text": "子供と一緒に同じ体験ができる。",
+        "top": "74%",
+        "left": "4%",
+        "writing": "horizontal",
+        "tail": "none"
+      }
+    ]
+  }
+};
+/* ============================================================
+   === セリフ定義ブロック ここまで ===
+   ============================================================ */
+
+(function renderLp(data) {
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el && value != null) el.textContent = value;
+  };
+  document.querySelector(".lp-nakabiraki").hidden = !data.nakabirakiText1;
+  setText("lp-fv-headline", data.fvHeadline);
+  setText("lp-nakabiraki-text-1", data.nakabirakiText1);
+  setText("lp-kurotai-text-1", data.kurotaiText1);
+  setText("lp-closing-headline", data.closingHeadline);
+  setText("lp-closing-sub", data.closingSub);
+  setText("lp-cta-main", data.ctaLabel);
+  setText("lp-steps-heading", data.stepsHeading);
+  setText("lp-scarcity-text", data.scarcityText);
+  setText("lp-sticky-copy", data.stickyCopy);
+  setText("lp-sticky-cta-button", data.stickyCtaLabel);
+
+  // FVチップ3つの描画
+  const chipsEl = document.getElementById("lp-fv-chips");
+  if (chipsEl && Array.isArray(data.fvChips)) {
+    chipsEl.innerHTML = "";
+    data.fvChips.forEach((chip) => {
+      const li = document.createElement("li");
+      li.textContent = chip;
+      chipsEl.appendChild(li);
+    });
+  }
+
+  // 「やることは3つだけ」の描画
+  const stepsEl = document.getElementById("lp-steps-list");
+  if (stepsEl && Array.isArray(data.steps)) {
+    stepsEl.innerHTML = "";
+    data.steps.forEach((step) => {
+      const li = document.createElement("li");
+      const span = document.createElement("span");
+      span.textContent = step;
+      li.appendChild(span);
+      stepsEl.appendChild(li);
+    });
+  }
+
+  // 各コマへの吹き出しオーバーレイ描画
+  Object.keys(data.panels || {}).forEach((panelId) => {
+    const host = document.querySelector('[data-panel="' + panelId + '"]');
+    if (!host) return;
+    // 初期HTMLにもセリフを含め、再描画時には重複を除く。
+    host.querySelectorAll(".lp-bubble").forEach((el) => el.remove());
+    (data.panels[panelId] || []).forEach((bubble) => {
+      const div = document.createElement("div");
+      div.className = "lp-bubble";
+      div.textContent = bubble.text || "";
+      div.style.top = bubble.top || "10%";
+      if (bubble.right) {
+        div.style.right = bubble.right;
+      } else {
+        div.style.left = bubble.left || "8%";
+      }
+      div.setAttribute("data-writing", bubble.writing === "vertical" ? "vertical" : "horizontal");
+      div.setAttribute("data-tail", bubble.tail || "bottom-left");
+      host.appendChild(div);
+    });
+  });
+
+  // フキダシがコマ枠の下端を突き抜けている場合、top を自動で引き上げて枠内に収める。
+  // 収まっているフキダシ（overflowBottom <= 0）には一切触れない＝見た目は変わらない（N-2対応）。
+  // 画像が未ロードだと host の高さが0で誤判定するため、全コマ画像のロード完了後に実行する。
+  function clampBubblesIntoPanels() {
+    document.querySelectorAll(".lp-panel[data-panel] > .lp-bubble, .lp-fv[data-panel] > .lp-bubble").forEach((bubble) => {
+      const host = bubble.parentElement;
+      const hostRect = host.getBoundingClientRect();
+      if (hostRect.height <= 0) return;
+      const bubbleRect = bubble.getBoundingClientRect();
+      const overflowBottom = bubbleRect.bottom - hostRect.bottom;
+      if (overflowBottom <= 0) return;
+      const currentTopPx = bubbleRect.top - hostRect.top;
+      let newTopPx = currentTopPx - overflowBottom;
+      if (newTopPx < 0) newTopPx = 0;
+      bubble.style.top = (newTopPx / hostRect.height) * 100 + "%";
+    });
+  }
+  function whenPanelImagesLoaded(callback) {
+    const imgs = Array.from(document.querySelectorAll(".lp-panel img, .lp-fv img"));
+    let remaining = imgs.length;
+    if (remaining === 0) { callback(); return; }
+    const onOneDone = () => { remaining -= 1; if (remaining <= 0) callback(); };
+    imgs.forEach((img) => {
+      if (img.complete && img.naturalWidth > 0) {
+        onOneDone();
+      } else {
+        img.addEventListener("load", onOneDone);
+        img.addEventListener("error", onOneDone);
+      }
+    });
+  }
+  whenPanelImagesLoaded(clampBubblesIntoPanels);
+})(PANEL_DATA);
+</script>
+
+</html>
